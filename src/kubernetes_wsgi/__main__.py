@@ -60,6 +60,11 @@ def parse_args(argv: Sequence[Text]) -> Dict[str, Any]:
         default=20,
         help="Maximum number of threads to run",
     )
+    parser.add_argument(
+        "--hide-server",
+        action="store_true",
+        help="Hides server version in HTTP header"
+    )
     args = parser.parse_args(argv)
     return {
         "application": args.application,
@@ -68,6 +73,7 @@ def parse_args(argv: Sequence[Text]) -> Dict[str, Any]:
         "health_check_path": args.health_check_path,
         "min_threads": args.min_threads,
         "max_threads": args.max_threads,
+        "hide_server": args.hide_server,
     }
 
 
