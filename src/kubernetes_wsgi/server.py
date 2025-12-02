@@ -1,8 +1,8 @@
 import logging
 
+
 # This is a fake import, only used during type checking.
 from typing import TYPE_CHECKING, Callable
-
 from prometheus_client import REGISTRY  # type: ignore
 from prometheus_client.twisted import MetricsResource  # type: ignore
 from twisted import logger  # type: ignore
@@ -12,11 +12,11 @@ from twisted.internet.protocol import Factory  # type: ignore
 from twisted.logger import STDLibLogObserver  # type: ignore
 from twisted.python import threadpool  # type: ignore
 from twisted.web.http import Request, proxiedLogFormatter  # type: ignore
+import twisted.web.http
 from twisted.web.server import Site  # type: ignore
 from twisted.web.wsgi import WSGIResource  # type: ignore
 
 from .metrics import TwistedThreadPoolCollector
-
 
 if TYPE_CHECKING:
     from wsgiref.types import WSGIApplication
@@ -28,7 +28,8 @@ LogFormatter = Callable[[str, Request], str]
 class KubernetesWSGISite(Site):
     """Extension to Site to ignore heath checks for access logging."""
 
-    def __init__(self, health_check_path: str, *args, **kwargs):
+    def __init__(self, health_check_path: str, hide_server: bool = False, *args, **kwargs):
+        self.hide_server = hide_server
         self.__health_check_path = health_check_path
         super().__init__(*args, **kwargs)
 
@@ -36,6 +37,12 @@ class KubernetesWSGISite(Site):
         path = request.path.decode()
         if path != self.__health_check_path:
             return super().log(request)
+        
+    def getResourceFor(self, request):
+        if self.hide_server:
+            request.setHeader(b'server', b"")
+        
+        return super().getResourceFor(request)
 
 
 class MetricsSite(Site):
@@ -53,6 +60,7 @@ def serve(
     health_check_path: str = "/healthz",
     min_threads: int = 5,
     max_threads: int = 20,
+    hide_server: bool = True,
 ):
     # Quiet the Twisted factory logging.
     Factory.noisy = False
@@ -76,6 +84,7 @@ def serve(
         port,
         access_log_formatter,
         health_check_path,
+        hide_server,
     )
     _listen_metrics(reactor, metrics_port)
 
@@ -96,6 +105,7 @@ def _listen_wsgi(
     port: int,
     access_log_formatter: LogFormatter,
     health_check_path: str,
+    hide_server: bool,
 ) -> None:
     """Listen for the WSGI application."""
     wsgi_resource = WSGIResource(reactor, pool, application)
