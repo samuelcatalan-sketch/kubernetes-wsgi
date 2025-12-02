@@ -12,7 +12,6 @@ from twisted.internet.protocol import Factory  # type: ignore
 from twisted.logger import STDLibLogObserver  # type: ignore
 from twisted.python import threadpool  # type: ignore
 from twisted.web.http import Request, proxiedLogFormatter  # type: ignore
-import twisted.web.http
 from twisted.web.server import Site  # type: ignore
 from twisted.web.wsgi import WSGIResource  # type: ignore
 
