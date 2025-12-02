@@ -12,3 +12,5 @@ dist
 docs/_build/
 htmlcov
 pip-wheel-metadata
+.vscode
+.venv
